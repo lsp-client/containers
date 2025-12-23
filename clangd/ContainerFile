@@ -1,0 +1,20 @@
+ARG VERSION=21
+FROM docker.io/library/alpine:latest
+ARG VERSION
+LABEL org.opencontainers.image.title="clangd LSP" \
+      org.opencontainers.image.description="C/C++ Language Server" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/lsp-client/containers" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+RUN apk add --no-cache clang-extra-tools && \
+    # Remove unnecessary files to reduce size
+    rm -rf /usr/include /usr/lib/gcc /usr/libexec /usr/share/man && \
+    # Remove all symlinks in /usr/bin except clangd
+    find /usr/bin -type l -not -name clangd -delete && \
+    # Remove all binaries in llvm bin except clangd
+    find /usr/lib/llvm*/bin -type f -not -name clangd -delete
+
+WORKDIR /workspace
+USER 65532:65532
+ENTRYPOINT ["clangd"]
