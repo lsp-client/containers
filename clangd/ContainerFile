@@ -7,13 +7,14 @@ LABEL org.opencontainers.image.title="clangd LSP" \
       org.opencontainers.image.source="https://github.com/lsp-client/containers" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-RUN apk add --no-cache clang-extra-tools && \
+RUN apk add --no-cache clang-extra-tools findutils && \
     # Remove unnecessary files to reduce size
     rm -rf /usr/include /usr/lib/gcc /usr/libexec /usr/share/man && \
     # Remove all symlinks in /usr/bin except clangd
     find /usr/bin -type l -not -name clangd -delete && \
     # Remove all binaries in llvm bin except clangd
-    find /usr/lib/llvm*/bin -type f -not -name clangd -delete
+    find /usr/lib/llvm*/bin -type f -not -name clangd -delete && \
+    apk del findutils
 
 WORKDIR /workspace
 USER 65532:65532
