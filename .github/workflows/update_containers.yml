@@ -82,5 +82,5 @@ jobs:
           file: ./${{ matrix.server }}/ContainerFile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.server }}:${{ steps.get_version.outputs.version }}
-            ghcr.io/${{ github.repository }}/${{ matrix.server }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:${{ steps.get_version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:latest
