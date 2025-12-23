@@ -1,4 +1,4 @@
-ARG VERSION=21
+ARG VERSION=21.1.8
 FROM docker.io/library/alpine:latest
 ARG VERSION
 LABEL org.opencontainers.image.title="clangd LSP" \

@@ -1,5 +1,5 @@
 # Multi-stage build for rust-analyzer
-ARG VERSION=2025-12-15
+ARG VERSION=2025-12-22
 FROM docker.io/library/rust:slim-bookworm AS builder
 ARG VERSION
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*

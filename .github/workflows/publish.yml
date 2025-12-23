@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        image: [deno, gopls, pyrefly, pyright, rust-analyzer, ty, typescript]
+        image: [clangd, deno, gopls, pyrefly, pyright, rust-analyzer, ty, typescript]
 
     steps:
       - name: Checkout repository
