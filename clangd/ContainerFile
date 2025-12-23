@@ -1,4 +1,20 @@
 ARG VERSION=21.1.8
+FROM docker.io/library/alpine:latest AS builder
+ARG VERSION
+RUN apk add --no-cache clang-extra-tools && \
+    mkdir -p /output/usr/local/bin /output/usr/lib && \
+    cp /usr/lib/llvm21/bin/clangd /output/usr/local/bin/ && \
+    cp /usr/lib/llvm21/lib/libclang-cpp.so.* /output/usr/lib/ && \
+    cp /usr/lib/llvm21/lib/libLLVM.so.* /output/usr/lib/ && \
+    cp /usr/lib/libstdc++.so.* /output/usr/lib/ && \
+    cp /usr/lib/libgcc_s.so.1 /output/usr/lib/ && \
+    cp /usr/lib/libffi.so.8 /output/usr/lib/ && \
+    cp /usr/lib/libz.so.1 /output/usr/lib/ && \
+    cp /usr/lib/libzstd.so.1 /output/usr/lib/ && \
+    cp /usr/lib/libxml2.so.2 /output/usr/lib/ && \
+    cp /usr/lib/liblzma.so.5 /output/usr/lib/ && \
+    rm -rf /var/cache/apk/*
+
 FROM docker.io/library/alpine:latest
 ARG VERSION
 LABEL org.opencontainers.image.title="clangd LSP" \
@@ -7,15 +23,9 @@ LABEL org.opencontainers.image.title="clangd LSP" \
       org.opencontainers.image.source="https://github.com/lsp-client/containers" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-RUN apk add --no-cache clang-extra-tools findutils && \
-    # Remove unnecessary files to reduce size
-    rm -rf /usr/include /usr/lib/gcc /usr/libexec /usr/share/man && \
-    # Remove all symlinks in /usr/bin except clangd
-    find /usr/bin -type l -not -name clangd -delete && \
-    # Remove all binaries in llvm bin except clangd
-    find /usr/lib/llvm*/bin -type f -not -name clangd -delete && \
-    apk del findutils
+COPY --from=builder /output/usr/local/bin/clangd /usr/local/bin/clangd
+COPY --from=builder /output/usr/lib /usr/lib/
 
 WORKDIR /workspace
 USER 65532:65532
-ENTRYPOINT ["clangd"]
+ENTRYPOINT ["/usr/local/bin/clangd"]
