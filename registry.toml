@@ -28,6 +28,10 @@ strip_v = true
 type = "custom"
 command = "curl -s https://proxy.golang.org/golang.org/x/tools/gopls/@latest | jq -r .Version"
 
+[clangd]
+type = "custom"
+command = "curl -sL https://github.com/llvm/llvm-project/releases | grep -o 'llvmorg-[0-9]*\\.[0-9]*\\.[0-9]*' | head -1 | sed 's/llvmorg-//'"
+
 # [custom-server]
 # type = "custom"
 # command = "curl -s https://api.example.com/version | jq -r .version"
