@@ -62,6 +62,7 @@ jobs:
           context: ./${{ matrix.image }}
           file: ./${{ matrix.image }}/ContainerFile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.get_version.outputs.VERSION }}
