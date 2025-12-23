@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        image: [deno, pyrefly, pyright, rust-analyzer, ty, typescript]
+        image: [deno, gopls, pyrefly, pyright, rust-analyzer, ty, typescript]
 
     steps:
       - name: Checkout repository
@@ -44,6 +44,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           tags: |
             type=raw,value=latest
             type=sha
