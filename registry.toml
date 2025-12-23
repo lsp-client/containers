@@ -1,3 +1,7 @@
+[vue]
+type = "npm"
+package = "@vue/language-server"
+
 [pyright]
 type = "npm"
 package = "pyright"
