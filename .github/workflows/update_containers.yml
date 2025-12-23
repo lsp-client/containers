@@ -23,11 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          python-version: '3.12'
-
       - name: Run update script
         id: update
         run: |
@@ -35,7 +30,7 @@ jobs:
           if [[ "${{ github.event.inputs.force }}" == "true" ]]; then
             FORCE_FLAG="--force"
           fi
-          uv run scripts/update_containers.py $FORCE_FLAG
+          python scripts/update_containers.py $FORCE_FLAG
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
