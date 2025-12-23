@@ -79,3 +79,5 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:${{ steps.get_version.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
