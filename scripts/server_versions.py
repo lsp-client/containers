@@ -1,71 +1,96 @@
+# /// script
+# dependencies = [
+#   "httpx",
+# ]
+# ///
+
 from __future__ import annotations
 
+import asyncio
 import json
-import subprocess
+import os
 import sys
+from typing import Any
+
+import httpx
 import tomllib
-import urllib.request
 
 
-def get_latest_npm(package):
-    with urllib.request.urlopen(
-        f"https://registry.npmjs.org/{package}/latest"
-    ) as response:
-        return json.load(response)["version"]
+async def get_latest_npm(client: httpx.AsyncClient, package: str) -> str:
+    r = await client.get(f"https://registry.npmjs.org/{package}/latest")
+    r.raise_for_status()
+    return r.json()["version"]
 
 
-def get_latest_pypi(package):
-    with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json") as response:
-        return json.load(response)["info"]["version"]
+async def get_latest_pypi(client: httpx.AsyncClient, package: str) -> str:
+    r = await client.get(f"https://pypi.org/pypi/{package}/json")
+    r.raise_for_status()
+    return r.json()["info"]["version"]
 
 
-def get_latest_github_release(repo):
-    request = urllib.request.Request(
-        f"https://api.github.com/repos/{repo}/releases/latest"
+async def get_latest_github_release(client: httpx.AsyncClient, repo: str) -> str:
+    headers = {"User-Agent": "lsp-client-updater"}
+    if token := os.environ.get("GITHUB_TOKEN"):
+        headers["Authorization"] = f"Bearer {token}"
+
+    r = await client.get(
+        f"https://api.github.com/repos/{repo}/releases/latest", headers=headers
     )
-    request.add_header("User-Agent", "lsp-client-updater")
-    import os
-
-    token = os.environ.get("GITHUB_TOKEN")
-    if token:
-        request.add_header("Authorization", f"Bearer {token}")
-    with urllib.request.urlopen(request) as response:
-        return json.load(response)["tag_name"]
+    r.raise_for_status()
+    return r.json()["tag_name"]
 
 
-def get_latest_custom(command: str) -> str:
-    result = subprocess.run(
-        command, shell=True, capture_output=True, text=True, check=True
+async def get_latest_custom(command: str) -> str:
+    proc = await asyncio.create_subprocess_shell(
+        command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
-    return result.stdout.strip()
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        raise RuntimeError(f"Command failed: {stderr.decode().strip()}")
+    return stdout.decode().strip()
 
 
-def main():
+async def fetch_version(
+    client: httpx.AsyncClient, server: str, config: dict[str, Any]
+) -> tuple[str, str | None]:
+    try:
+        t = config.get("type")
+        if t == "npm":
+            v = await get_latest_npm(client, config["package"])
+        elif t == "pypi":
+            v = await get_latest_pypi(client, config["package"])
+        elif t == "github":
+            v = await get_latest_github_release(client, config["repo"])
+            if config.get("strip_v"):
+                v = v.lstrip("v")
+        elif t == "custom":
+            v = await get_latest_custom(config["command"])
+        else:
+            return server, None
+        return server, v
+    except Exception as e:
+        print(f"Error fetching version for {server}: {e}", file=sys.stderr)
+        return server, None
+
+
+async def main():
     with open("registry.toml", "rb") as f:
         wiki = tomllib.load(f)
 
-    versions = {}
-    for server, config in wiki.items():
-        if not isinstance(config, dict):
-            continue
-        try:
-            if config["type"] == "npm":
-                versions[server] = get_latest_npm(config["package"])
-            elif config["type"] == "pypi":
-                versions[server] = get_latest_pypi(config["package"])
-            elif config["type"] == "github":
-                v = get_latest_github_release(config["repo"])
-                if config.get("strip_v"):
-                    v = v.lstrip("v")
-                versions[server] = v
-            elif config["type"] == "custom":
-                versions[server] = get_latest_custom(config["command"])
-        except Exception as e:
-            print(f"Error fetching version for {server}: {e}", file=sys.stderr)
-            continue
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        tasks = [
+            fetch_version(client, server, config)
+            for server, config in wiki.items()
+            if isinstance(config, dict)
+        ]
+        results = await asyncio.gather(*tasks)
 
-    print(json.dumps(versions, indent=2))
+    versions = {s: v for s, v in results if v is not None}
+    json.dump(versions, sys.stdout, indent=2)
+    print()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
