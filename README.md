@@ -42,6 +42,7 @@ ENTRYPOINT ["<binary-name>", "--stdio"]
 ```
 
 **Key points:**
+
 - Use multi-stage builds to minimize final image size
 - Define `ARG VERSION` for version management
 - Set appropriate labels for metadata
@@ -63,6 +64,7 @@ strip_v = true      # optional, remove 'v' prefix from github releases
 #### Registry Types
 
 **npm**: For Node.js packages
+
 ```toml
 [typescript]
 type = "npm"
@@ -70,6 +72,7 @@ package = "typescript-language-server"
 ```
 
 **pypi**: For Python packages
+
 ```toml
 [pyrefly]
 type = "pypi"
@@ -77,6 +80,7 @@ package = "pyrefly"
 ```
 
 **github**: For GitHub releases
+
 ```toml
 [rust-analyzer]
 type = "github"
@@ -89,6 +93,7 @@ strip_v = true  # Remove 'v' prefix from version tags
 ```
 
 **custom**: For custom version checking commands
+
 ```toml
 [custom-server]
 type = "custom"
@@ -98,11 +103,13 @@ command = "curl -s https://api.example.com/version | jq -r .version"
 ### Step 3: Build and Test
 
 The CI system will automatically:
+
 1. Check for new versions using the registry configuration
 2. Build containers when versions change
 3. Push images to the registry
 
 To manually test:
+
 ```bash
 # Build container (works with both Docker and Podman)
 # Podman will automatically pick up 'ContainerFile'

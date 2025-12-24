@@ -22,6 +22,10 @@ repo = "rust-lang/rust-analyzer"
 type = "pypi"
 package = "pyrefly"
 
+[ruff]
+type = "pypi"
+package = "ruff"
+
 [ty]
 type = "github"
 repo = "astral-sh/ty"
