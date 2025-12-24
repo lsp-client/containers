@@ -6,6 +6,10 @@ package = "@vue/language-server"
 type = "npm"
 package = "pyright"
 
+[basedpyright]
+type = "npm"
+package = "basedpyright"
+
 [typescript]
 type = "npm"
 package = "typescript-language-server"
