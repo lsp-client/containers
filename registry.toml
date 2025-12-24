@@ -27,9 +27,8 @@ type = "pypi"
 package = "ruff"
 
 [ty]
-type = "github"
-repo = "astral-sh/ty"
-strip_v = true
+type = "pypi"
+package = "ty"
 
 [deno]
 type = "github"
