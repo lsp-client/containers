@@ -1,0 +1,40 @@
+ARG VERSION=1.55.0-202512191249
+FROM amazoncorretto:21-alpine AS builder
+ARG VERSION
+RUN apk add --no-cache curl tar binutils && \
+    mkdir -p /opt/jdtls && \
+    curl -sL "https://download.eclipse.org/jdtls/snapshots/jdt-language-server-${VERSION}.tar.gz" | \
+    tar -xz -C /opt/jdtls --strip-components=1 && \
+    rm -rf /opt/jdtls/config_mac /opt/jdtls/config_win /opt/jdtls/jdtls.bat && \
+    find /opt/jdtls -name "*.md" -delete -o -name "README*" -delete -o -name "about.*" -delete -o -name "*.html" -delete -o -name "*.source_*.jar" -delete && \
+    find /opt/jdtls -name "org.eclipse.equinox.launcher.cocoa.*" -delete && \
+    find /opt/jdtls -name "org.eclipse.equinox.launcher.win32.*" -delete && \
+    find /opt/jdtls -name "org.eclipse.equinox.launcher.gtk.linux.x86_64*" -delete
+
+RUN jlink \
+    --add-modules java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.prefs,java.rmi,java.scripting,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.unsupported,jdk.jfr \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    --output /opt/jre
+
+FROM alpine:3.21
+ARG VERSION
+RUN apk add --no-cache python3 libstdc++ && \
+    rm -rf /var/cache/apk/*
+LABEL org.opencontainers.image.title="jdtls" \
+      org.opencontainers.image.description="Eclipse JDT Language Server for Java" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/lsp-client/containers" \
+      org.opencontainers.image.licenses="EPL-2.0"
+
+COPY --from=builder /opt/jre /opt/jre
+COPY --from=builder /opt/jdtls /opt/jdtls
+
+WORKDIR /workspace
+ENV JAVA_HOME=/opt/jre \
+    PATH="/opt/jre/bin:/opt/jdtls:${PATH}" \
+    PYTHONDONTWRITEBYTECODE=1
+USER 65532:65532
+ENTRYPOINT ["python3", "-B", "/opt/jdtls/jdtls.py", "--", "--stdio"]

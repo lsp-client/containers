@@ -1,4 +1,4 @@
-ARG VERSION=0.46.0
+ARG VERSION=0.46.1
 
 FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS builder
 ARG VERSION
