@@ -26,6 +26,10 @@ package = "pyrefly"
 type = "pypi"
 package = "ruff"
 
+[zuban]
+type = "pypi"
+package = "zuban"
+
 [ty]
 type = "pypi"
 package = "ty"
