@@ -1,6 +1,11 @@
 # Container Registry
 
-This directory contains Docker container configurations for LSP servers and a registry system for managing server versions.
+This directory contains Docker container configurations for LSP servers and a registry system for managing server versions. All images are built and verified with basic runtime tests, and are optimized for minimal size using multi-stage builds and lean base images.
+
+## Features
+
+- **Verified & Tested**: Every image undergoes automated build and basic runtime testing.
+- **Size Optimized**: We utilize multi-stage builds and minimal base images to ensure the smallest possible footprint.
 
 ## Directory Structure
 
