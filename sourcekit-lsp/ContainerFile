@@ -1,0 +1,33 @@
+ARG VERSION=6.2.3
+FROM docker.io/library/swift:${VERSION} AS builder
+
+FROM docker.io/library/swift:${VERSION}-slim
+ARG VERSION
+LABEL org.opencontainers.image.title="sourcekit-lsp" \
+      org.opencontainers.image.description="Swift Language Server" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/lsp-client/containers" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+RUN apt-get update && apt-get install -y \
+    libsqlite3-0 \
+    libncurses6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy sourcekit-lsp and its specialized libraries
+COPY --from=builder /usr/bin/sourcekit-lsp /usr/bin/sourcekit-lsp
+COPY --from=builder /usr/lib/libsourcekitdInProc.so /usr/lib/libsourcekitdInProc.so
+COPY --from=builder /usr/lib/swift/host/compiler/*.so /usr/lib/swift/host/compiler/
+
+# Copy necessary toolchain components for indexing and SPM support
+COPY --from=builder /usr/bin/swift-frontend /usr/bin/swift-frontend
+COPY --from=builder /usr/bin/swift-package /usr/bin/swift-package
+COPY --from=builder /usr/bin/swift-driver /usr/bin/swift-driver
+
+# Utilizing the project's clangd image would require musl compatibility, 
+# instead we copy the one from the toolchain but keep it minimal.
+COPY --from=builder /usr/bin/clangd /usr/bin/clangd
+
+WORKDIR /workspace
+ENTRYPOINT ["/usr/bin/sourcekit-lsp"]
+CMD ["--stdio"]

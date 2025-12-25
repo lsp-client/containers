@@ -43,6 +43,10 @@ command = "curl -s https://proxy.golang.org/golang.org/x/tools/gopls/@latest | j
 type = "custom"
 command = "curl -sL https://github.com/llvm/llvm-project/releases | grep -o 'llvmorg-[0-9]*\\.[0-9]*\\.[0-9]*' | head -1 | sed 's/llvmorg-//'"
 
+[sourcekit-lsp]
+type = "custom"
+command = "curl -s https://api.github.com/repos/swiftlang/swift/releases/latest | jq -r .tag_name | sed 's/swift-//;s/-RELEASE//'"
+
 [jdtls]
 type = "custom"
 command = "curl -sL https://download.eclipse.org/jdtls/snapshots/latest.txt | sed 's/.*jdt-language-server-\\([0-9.-]*\\).tar.gz.*/\\1/'"
