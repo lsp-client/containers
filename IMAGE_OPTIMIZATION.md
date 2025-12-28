@@ -254,7 +254,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 ```
 
-**Important**: If cleanup is done in a different RUN command, the previous layer's size will not be reduced.
+**Important**: If cleanup is done in a different RUN command, the previous layer's size will not be reduced. This is because Docker layers are immutable - once a layer is created with files, those files remain in that layer permanently, even if deleted in a subsequent layer.
 
 ## Language-Specific Optimization Techniques
 
@@ -289,7 +289,7 @@ RUN apt-get update && \
 | Technique | Implementation | Size Reduction |
 |-----------|----------------|----------------|
 | Use pre-compiled binaries | Download from GitHub releases | Avoid build dependencies |
-| Use distroless/cc | Minimal runtime | ~95% |
+| Use distroless/cc | Minimal runtime | ~95% (vs full image) |
 | Strip binary | `strip` command | 30-40% |
 
 ### Java
