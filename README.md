@@ -1,4 +1,7 @@
-# Container Registry
+# LSP Container Registry
+
+[![CI](https://github.com/lsp-client/containers/actions/workflows/ci.yml/badge.svg)](https://github.com/lsp-client/containers/actions/workflows/ci.yml)
+[![Publish Containers](https://github.com/lsp-client/containers/actions/workflows/publish.yml/badge.svg)](https://github.com/lsp-client/containers/actions/workflows/publish.yml)
 
 This directory contains Docker container configurations for LSP servers and a registry system for managing server versions. All images are built and verified with basic runtime tests, and are optimized for minimal size using multi-stage builds and lean base images.
 
