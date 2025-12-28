@@ -22,6 +22,11 @@ package = "typescript-language-server"
 type = "github"
 repo = "rust-lang/rust-analyzer"
 
+[haskell]
+type = "github"
+repo = "haskell/haskell-language-server"
+args = { GHC_VERSION = "9.12" }
+
 [pyrefly]
 type = "pypi"
 package = "pyrefly"

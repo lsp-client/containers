@@ -1,0 +1,60 @@
+# Multi-stage build for haskell-language-server
+ARG VERSION=2.12.0.0
+FROM docker.io/library/debian:bookworm-slim AS builder
+ARG VERSION
+ARG GHC_VERSION=9.10
+RUN apt-get update && apt-get install -y curl xz-utils binutils && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN set -eux; \
+    arch=$(uname -m); \
+    case "$arch" in \
+        x86_64) \
+            asset="haskell-language-server-${VERSION}-x86_64-linux-deb12.tar.xz" ;; \
+        aarch64) \
+            asset="haskell-language-server-${VERSION}-aarch64-linux-ubuntu2004.tar.xz" ;; \
+        *) \
+            echo "Unsupported architecture: $arch"; exit 1 ;; \
+    esac; \
+    curl -L "https://github.com/haskell/haskell-language-server/releases/download/${VERSION}/${asset}" -o hls.tar.xz; \
+    tar -xJf hls.tar.xz; \
+    cd haskell-language-server-${VERSION}; \
+    GHC_FULL=$(ls lib | grep "^${GHC_VERSION}" | head -n 1); \
+    if [ -z "$GHC_FULL" ]; then echo "GHC version ${GHC_VERSION} not found in release"; exit 1; fi; \
+    mkdir -p /opt/hls/bin /opt/hls/lib; \
+    cp bin/haskell-language-server-wrapper /opt/hls/bin/; \
+    cp bin/haskell-language-server-${GHC_FULL} /opt/hls/bin/; \
+    cp -r lib/${GHC_FULL} /opt/hls/lib/; \
+    # Strip binaries and shared objects
+    find /opt/hls -type f -executable -exec strip --strip-unneeded {} + || true; \
+    find /opt/hls -name "*.so" -exec strip --strip-unneeded {} + || true; \
+    echo "${GHC_FULL}" > /opt/hls/ghc-version
+
+FROM docker.io/library/debian:bookworm-slim
+ARG VERSION
+ARG GHC_VERSION=9.10
+LABEL org.opencontainers.image.title="Haskell Language Server (GHC ${GHC_VERSION})" \
+      org.opencontainers.image.description="Haskell Language Server (HLS) for GHC ${GHC_VERSION}" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/lsp-client/containers" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+RUN apt-get update && apt-get install -y \
+    libtinfo6 libgmp10 libc6 libffi8 libncurses6 zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/hls /opt/hls
+ENV PATH="/opt/hls/bin:${PATH}"
+
+# Register shared libraries
+RUN GHC_FULL=$(cat /opt/hls/ghc-version) && \
+    echo "/opt/hls/lib/${GHC_FULL}" > /etc/ld.so.conf.d/hls.conf && \
+    ldconfig
+
+WORKDIR /workspace
+RUN useradd -m -u 1000 haskell
+USER haskell
+
+ENTRYPOINT ["haskell-language-server-wrapper"]
+CMD ["--lsp"]
