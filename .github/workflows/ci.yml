@@ -62,9 +62,11 @@ jobs:
       - name: Test image
         run: |
           # Test if the image can run on the target architecture.
-          # We try --version and --help as they are common and should return 0.
+          # Some LSPs don't support --version or --help and exit with non-zero status.
+          # We try common flags, but fall back to a simple sh -c "true" to verify execution.
           docker run --rm --platform ${{ matrix.platform }} lsp-test --version || \
-          docker run --rm --platform ${{ matrix.platform }} lsp-test --help
+          docker run --rm --platform ${{ matrix.platform }} lsp-test --help || \
+          docker run --rm --platform ${{ matrix.platform }} --entrypoint sh lsp-test -c "true"
 
       - name: Check image size
         run: |
