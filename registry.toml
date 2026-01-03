@@ -64,6 +64,10 @@ command = "curl -s https://api.github.com/repos/swiftlang/swift/releases/latest 
 type = "custom"
 command = "curl -sL https://download.eclipse.org/jdtls/snapshots/latest.txt | sed 's/.*jdt-language-server-\\([0-9.-]*\\).tar.gz.*/\\1/'"
 
+[zls]
+type = "github"
+repo = "zigtools/zls"
+
 # [custom-server]
 # type = "custom"
 # command = "curl -s https://api.example.com/version | jq -r .version"

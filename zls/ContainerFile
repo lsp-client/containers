@@ -1,0 +1,30 @@
+ARG VERSION=0.15.1
+
+FROM docker.io/library/alpine:latest AS builder
+ARG VERSION
+RUN apk add --no-cache curl xz
+
+WORKDIR /tmp
+RUN set -eux; \
+    arch=$(uname -m); \
+    case "$arch" in \
+        x86_64) zls_arch="x86_64" ;; \
+        aarch64) zls_arch="aarch64" ;; \
+        *) echo "Unsupported architecture: $arch"; exit 1 ;; \
+    esac; \
+    curl -L "https://github.com/zigtools/zls/releases/download/${VERSION}/zls-${zls_arch}-linux.tar.xz" | tar -xJ; \
+    mv zls /usr/local/bin/zls
+
+FROM gcr.io/distroless/static-debian12
+ARG VERSION
+LABEL org.opencontainers.image.title="ZLS" \
+      org.opencontainers.image.description="Zig Language Server" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/lsp-client/containers" \
+      org.opencontainers.image.licenses="MIT"
+
+COPY --from=builder /usr/local/bin/zls /usr/local/bin/zls
+
+WORKDIR /workspace
+USER 65532:65532
+ENTRYPOINT ["/usr/local/bin/zls"]
