@@ -8,7 +8,7 @@ This directory contains Docker container configurations for LSP servers and a re
 ## Features
 
 - **Verified & Tested**: Every image undergoes automated build and basic runtime testing.
-- **Size Optimized**: We utilize multi-stage builds and minimal base images to ensure the smallest possible footprint. See [IMAGE_OPTIMIZATION.md](IMAGE_OPTIMIZATION.md) for detailed optimization strategies.
+- **Size Optimized**: We utilize multi-stage builds and minimal base images to ensure the smallest possible footprint. See [IMAGE_OPTIMIZATION.md](docs/IMAGE_OPTIMIZATION.mdm for detailed optimization strategies.
 
 ## Directory Structure
 
