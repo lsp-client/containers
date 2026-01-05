@@ -2,12 +2,8 @@ ARG VERSION=1.36.2
 FROM docker.io/library/node:22-alpine AS builder
 ARG VERSION
 WORKDIR /app
-RUN apk add --no-cache curl && \
-    curl -sf https://gobinaries.com/tj/node-prune | sh && \
-    npm install --no-package-lock --no-audit --no-fund basedpyright@${VERSION} && \
-    npm prune --production && \
-    /usr/local/bin/node-prune && \
-    apk del curl
+RUN npm install --no-package-lock --no-audit --no-fund basedpyright@${VERSION} && \
+    npm prune --production
 
 FROM docker.io/library/node:22-alpine
 ARG VERSION

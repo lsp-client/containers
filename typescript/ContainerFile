@@ -2,11 +2,8 @@ ARG VERSION=5.1.3
 FROM docker.io/library/node:22-alpine AS builder
 ARG VERSION
 WORKDIR /app
-RUN apk add --no-cache curl && \
-    curl -sf https://gobinaries.com/tj/node-prune | sh && \
-    npm install typescript-language-server@${VERSION} typescript && \
-    npm prune --production && \
-    /usr/local/bin/node-prune
+RUN npm install typescript-language-server@${VERSION} typescript && \
+    npm prune --production
 
 FROM docker.io/library/node:22-alpine
 ARG VERSION
