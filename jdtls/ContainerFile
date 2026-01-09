@@ -4,7 +4,7 @@ ARG VERSION
 RUN apk add --no-cache curl tar binutils && \
     mkdir -p /opt/jdtls && \
     curl -sL "https://download.eclipse.org/jdtls/snapshots/jdt-language-server-${VERSION}.tar.gz" | \
-    tar -xz -C /opt/jdtls --strip-components=1 && \
+    tar -xz -C /opt/jdtls && \
     rm -rf /opt/jdtls/config_mac /opt/jdtls/config_win /opt/jdtls/jdtls.bat && \
     find /opt/jdtls -name "*.md" -delete -o -name "README*" -delete -o -name "about.*" -delete -o -name "*.html" -delete -o -name "*.source_*.jar" -delete && \
     find /opt/jdtls -name "org.eclipse.equinox.launcher.cocoa.*" -delete && \
@@ -34,7 +34,7 @@ COPY --from=builder /opt/jdtls /opt/jdtls
 
 WORKDIR /workspace
 ENV JAVA_HOME=/opt/jre \
-    PATH="/opt/jre/bin:/opt/jdtls:${PATH}" \
+    PATH="/opt/jre/bin:/opt/jdtls/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1
 USER 65532:65532
-ENTRYPOINT ["python3", "-B", "/opt/jdtls/jdtls.py", "--", "--stdio"]
+ENTRYPOINT ["jdtls", "--stdio"]
