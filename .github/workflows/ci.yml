@@ -23,14 +23,16 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: set-matrix
         run: |
-          # Find all directories containing a ContainerFile
-          IMAGES=$(find . -maxdepth 2 -name ContainerFile -exec dirname {} \; | sed 's|./||' | sort | jq -R . | jq -s -c .)
+          IMAGES=$(python3 scripts/get_changed_images.py)
           echo "matrix=$IMAGES" >> $GITHUB_OUTPUT
 
   build-and-test:
     needs: setup
+    if: needs.setup.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

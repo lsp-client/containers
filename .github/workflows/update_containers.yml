@@ -6,23 +6,28 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Force build all images'
+        description: 'Force update all servers'
         type: boolean
         default: false
 
 permissions:
   contents: write
   packages: write
+  actions: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    outputs:
-      has_updates: ${{ steps.update.outputs.has_updates }}
-      updated_servers: ${{ steps.update.outputs.updated_servers }}
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
       - name: Run update script
         id: update
         run: |
@@ -30,11 +35,12 @@ jobs:
           if [[ "${{ github.event.inputs.force }}" == "true" ]]; then
             FORCE_FLAG="--force"
           fi
-          python scripts/update_containers.py $FORCE_FLAG
+          uv run scripts/update_containers.py $FORCE_FLAG
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push changes
+        id: push
         if: steps.update.outputs.has_updates == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
@@ -43,48 +49,15 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore: update server versions"
             git push
+            echo "pushed=true" >> $GITHUB_OUTPUT
           else
             echo "No changes to commit"
+            echo "pushed=false" >> $GITHUB_OUTPUT
           fi
 
-  build:
-    needs: update
-    if: needs.update.outputs.has_updates == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        server: ${{ fromJson(needs.update.outputs.updated_servers) }}
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get version
-        id: get_version
+      - name: Trigger Publish Workflow
+        if: steps.push.outputs.pushed == 'true'
         run: |
-          VERSION=$(grep "ARG VERSION=" ${{ matrix.server }}/ContainerFile | cut -d'=' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./${{ matrix.server }}
-          file: ./${{ matrix.server }}/ContainerFile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:${{ steps.get_version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}:latest
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          gh workflow run publish.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
